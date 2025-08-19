@@ -17,3 +17,22 @@ stages:
           - task: DotNetCoreCLI@2
             inputs:
               command: test
+  - stage: "Publish"
+    jobs:
+      - job: "DotNetPublish" 
+        steps:
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: publish
+              arguments: '-o $(Build.ArtifactStagingDirectory)/Output'
+              zipAfterPublish: true
+              modifyOutputPath: true
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/Output'
+              ArtifactName: DbConTest
+
+
+
+            
+              
