@@ -1,0 +1,16 @@
+---
+trigger:
+  - main
+pool:
+ vmImage: "ubuntu-22.04"
+
+stages:
+  - stage: "BuildStage"
+    displayName: "Building .Net code"
+    jobs:
+      - job: "Building"
+        displayName: "Building .Net code"
+        steps:
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: 'build'
