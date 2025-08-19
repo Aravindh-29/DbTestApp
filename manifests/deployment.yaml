@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-connection-tester
+  namespace: db-connection-tester
+spec:
+  minReadySeconds: 10
+  replicas: 4
+  selector:
+    matchLabels:
+      app: db-connection-tester
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 50%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: db-connection-tester
+    spec:
+      containers:
+        - name: db-connection-tester
+          image: aravindh.azurecr.io/dbapp:1
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          
