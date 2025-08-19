@@ -32,6 +32,27 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/Output'
               ArtifactName: DbConTest
 
+  - stage: "Deploy"
+    dependsOn: "Publish"
+    jobs:
+      - deployment: "DeployWebApp"
+        displayName: "Deploy Web App"
+        environment: 'Dev'
+        strategy:
+         runOnce:
+          deploy:
+            steps:
+              - task: AzureWebApp@1
+                inputs:
+                  azureSubscription: 'AppServiceCon'
+                  appName: 'DbContester'
+                  package: '$(Pipeline.Workspace)/DbConTest/*.zip'
+                  appType: webApp
+           
+
+             
+              
+
 
 
             
