@@ -1,59 +1,63 @@
----
 trigger:
-  - master
+  branches:
+    include:
+      - main
+
 pool:
- vmImage: "ubuntu-22.04"
+  vmImage: 'ubuntu-22.04'
 
 stages:
-  - stage: "BuildStage"
-    displayName: "Building .Net code"
+  # 1. Build & Test
+  - stage: BuildStage
+    displayName: "Building .NET code"
     jobs:
-      - job: "Building"
-        displayName: "Building .Net code"
+      - job: Building
+        displayName: "Building .NET code"
         steps:
           - task: DotNetCoreCLI@2
             inputs:
               command: 'build'
           - task: DotNetCoreCLI@2
             inputs:
-              command: test
-  - stage: "Publish"
+              command: 'test'
+
+  # 2. Docker Build & Push
+  - stage: DockerImageBuild
     jobs:
-      - job: "DotNetPublish" 
+      - job: DockerImageBuild
         steps:
-          - task: DotNetCoreCLI@2
+          - task: Docker@2
+            displayName: Login to ACR
             inputs:
-              command: publish
-              arguments: '-o $(Build.ArtifactStagingDirectory)/Output'
-              zipAfterPublish: true
-              modifyOutputPath: true
-          - task: PublishBuildArtifacts@1
-            inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/Output'
-              ArtifactName: DbConTest
+              command: login
+              containerRegistry: 'ACR1'   # <-- Service connection to ACR
 
-  - stage: "Deploy"
-    dependsOn: "Publish"
+          - task: Docker@2
+            displayName: Build and Push Image
+            inputs:
+              command: buildAndPush
+              repository: 'repo1'          # <-- Repo in ACR
+              dockerfile: '**/Dockerfile'
+              tags: |
+                $(Build.BuildId)
+              containerRegistry: 'ACR1'
+
+  # 3. Deploy to AKS
+  - stage: Deploy
+    dependsOn: DockerImageBuild
     jobs:
-      - deployment: "DeployWebApp"
-        displayName: "Deploy Web App"
-        environment: 'Dev'
-        strategy:
-         runOnce:
-          deploy:
-            steps:
-              - task: AzureWebApp@1
-                inputs:
-                  azureSubscription: 'AppServiceCon'
-                  appName: 'DbContester'
-                  package: '$(Pipeline.Workspace)/DbConTest/*.zip'
-                  appType: webApp
-           
-
-             
-              
-
-
-
-            
+      - job: DeployToAKS
+        steps:
+          - bash: echo $(Build.BuildId)
+          - task: KubernetesManifest@1
+            displayName: Deploy to AKS
+            inputs:
+              action: deploy
+              kubernetesServiceConnection: 'AKS'   # <-- Service connection to AKS
+              namespace: default
+              manifests: |
+                manifests/deployment.yaml
+                manifests/service.yaml
+              containers: |
+                bluedock.azurecr.io/repo1:$(Build.BuildId)
               
