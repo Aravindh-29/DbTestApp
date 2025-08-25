@@ -1,15 +1,18 @@
 ﻿@{
-    ViewData["Title"] = "Database Connection Tester";
+    ViewData["Title"] = "Check Connection To Your DataBase";
 }
 
-<div class="container mt-5">
-    <h1 class="display-4 text-center">Database Connection Tester</h1>
-    <div class="row justify-content-center">
-        <div class="col-md-6">
+<!-- Reference the external CSS (for single-page use) -->
+<link rel="stylesheet" href="~/css/colorful-db.css" />
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="form-container">
+            <h2 class="form-title">🌈 Verify DB Connection</h2>
             <form method="post" asp-action="TestDbConnection" asp-controller="Home">
                 <div class="mb-3">
-                    <label for="dbType" class="form-label">Database Type</label>
-                    <select class="form-control" id="dbType" name="dbType" required>
+                    <label for="dbType" class="form-label">🌍 Database Type</label>
+                    <select class="form-select" id="dbType" name="dbType" required>
                         <option value="sqlserver">SQL Server</option>
                         <option value="mysql">MySQL</option>
                         <option value="postgresql">PostgreSQL</option>
@@ -17,24 +20,23 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="serverName" class="form-label">Server Name</label>
-                    <input type="text" class="form-control" id="serverName" name="serverName" required>
+                    <label for="serverName" class="form-label">🖥 Server Name</label>
+                    <input type="text" class="form-control" id="serverName" name="serverName" required placeholder="e.g., localhost or IP">
                 </div>
                 <div class="mb-3">
-                    <label for="dbName" class="form-label">Database Name</label>
-                    <input type="text" class="form-control" id="dbName" name="dbName" required>
+                    <label for="dbName" class="form-label">📂 Database Name</label>
+                    <input type="text" class="form-control" id="dbName" name="dbName" required placeholder="e.g., TestDB">
                 </div>
                 <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" name="username">
+                    <label for="username" class="form-label">👤 Username</label>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Enter username">
                 </div>
                 <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password">
+                    <label for="password" class="form-label">🔑 Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter password">
                 </div>
-                <button type="submit" class="btn btn-primary">Verify</button>
+                <button type="submit" class="btn btn-primary">✅ Verify Connection</button>
             </form>
-
             @if (ViewBag.Message != null)
             {
                 <div class="alert @(ViewBag.Success ? "alert-success" : "alert-danger") mt-3" role="alert">

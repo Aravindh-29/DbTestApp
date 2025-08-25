@@ -1,0 +1,63 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-22.04'
+
+stages:
+  # 1. Build & Test
+  - stage: BuildStage
+    displayName: "Building .NET code"
+    jobs:
+      - job: Building
+        displayName: "Building .NET code"
+        steps:
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: 'build'
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: 'test'
+
+  # 2. Docker Build & Push
+  - stage: DockerImageBuild
+    jobs:
+      - job: DockerImageBuild
+        steps:
+          - task: Docker@2
+            displayName: Login to ACR
+            inputs:
+              command: login
+              containerRegistry: 'ACR1'   # <-- Service connection to ACR
+
+          - task: Docker@2
+            displayName: Build and Push Image
+            inputs:
+              command: buildAndPush
+              repository: 'repo1'          # <-- Repo in ACR
+              dockerfile: '**/Dockerfile'
+              tags: |
+                $(Build.BuildId)
+              containerRegistry: 'ACR1'
+
+  # 3. Deploy to AKS
+  - stage: Deploy
+    dependsOn: DockerImageBuild
+    jobs:
+      - job: DeployToAKS
+        steps:
+          - bash: echo $(Build.BuildId)
+          - task: KubernetesManifest@1
+            displayName: Deploy to AKS
+            inputs:
+              action: deploy
+              kubernetesServiceConnection: 'AKS'   # <-- Service connection to AKS
+              namespace: default
+              manifests: |
+                manifests/deployment.yaml
+                manifests/service.yaml
+              containers: |
+                bluedock.azurecr.io/repo1:$(Build.BuildId)
+              
