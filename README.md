@@ -29,7 +29,7 @@ cd DbTestApp
 # --------------------------
 # 4. Publish the App
 # --------------------------
-dotnet publish -c Release -o /home/ubuntu/published
+sudo dotnet publish -c Release -o /home/ubuntu/published
 
 # --------------------------
 # 5. Create systemd Service
