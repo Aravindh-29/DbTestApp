@@ -288,5 +288,136 @@ stage('Build & Push Docker') {
 
 ---
 
+Got it ✅ Let me rewrite the full **Nexus Repository installation guide on Ubuntu** in a clean, step-by-step format:
 
+---
+
+# 🚀 Installing Nexus Repository on Ubuntu
+
+## 1. Install Java (Nexus requires Java 8 / 11 / 17)
+
+```bash
+sudo apt update
+sudo apt install openjdk-11-jdk -y
+```
+
+### Verify Java:
+
+```bash
+java -version
+```
+
+### Check all installed versions:
+
+```bash
+ls /usr/lib/jvm/
+```
+
+---
+
+## 2. Create a Nexus User
+
+It’s best practice to run Nexus under its own user.
+
+```bash
+sudo useradd -m nexus
+sudo passwd nexus
+```
+
+Add Nexus user to sudo group:
+
+```bash
+sudo usermod -aG sudo nexus
+```
+
+---
+
+## 3. Download Nexus from Official Site
+
+Go to [Sonatype Download Page](https://help.sonatype.com/en/download.html?utm_source=chatgpt.com) and get the latest version.
+
+Example (3.84.1-01):
+
+```bash
+cd /opt
+sudo wget https://download.sonatype.com/nexus/3/nexus-3.84.1-01-linux-x86_64.tar.gz
+```
+
+---
+
+## 4. Extract Nexus and Configure Permissions
+
+```bash
+sudo tar -xvzf nexus-3.84.1-01-linux-x86_64.tar.gz
+sudo mv nexus-3.84.1-01 nexus
+sudo chown -R nexus:nexus /opt/nexus
+sudo chown -R nexus:nexus /opt/sonatype-work
+```
+
+---
+
+## 5. Create a Systemd Service for Nexus
+
+Create a service file:
+
+```bash
+sudo nano /etc/systemd/system/nexus.service
+```
+
+Paste this:
+
+```ini
+[Unit]
+Description=Nexus Service
+After=network.target
+
+[Service]
+Type=forking
+LimitNOFILE=65536
+ExecStart=/opt/nexus/bin/nexus start
+ExecStop=/opt/nexus/bin/nexus stop
+User=nexus
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Save and exit (`CTRL+O`, `CTRL+X`).
+
+---
+
+## 6. Enable and Start Nexus Service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable nexus
+sudo systemctl start nexus
+sudo systemctl status nexus
+```
+
+---
+
+## 7. Access Nexus Web UI
+
+Open in browser:
+
+```
+http://<your-server-ip>:8081
+```
+
+Get the admin password:
+
+```bash
+cat /opt/sonatype-work/nexus3/admin.password
+```
+
+Login with:
+
+* **Username:** `admin`
+* **Password:** (value from file above)
+
+---
+
+✅ Done! Nexus Repository is now installed and running as a service on Ubuntu.
 
