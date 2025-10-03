@@ -127,7 +127,7 @@ pipeline {
 }
 
 ```
-## Line-by-line explanation (simple)
+## Line-by-line explanation (SONAR STAGE)
 
 * `withSonarQubeEnv('SonarServer')`
 
