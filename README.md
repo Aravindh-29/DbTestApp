@@ -129,6 +129,12 @@ pipeline {
 ```
 ## Line-by-line explanation (SONAR STAGE)
 
+
+* Install Sonarscanner on yourmachine firstly, make sure dotnet sdk present before you download this.
+```
+dotnet tool install --global dotnet-sonarscanner
+```
+
 * `withSonarQubeEnv('SonarServer')`
 
   * Tells Jenkins to use the Sonar server config named **SonarServer** (you set this in *Manage Jenkins → Configure System → SonarQube servers*).
