@@ -437,12 +437,15 @@ pipeline{
         NEXUS_CRED = credentials('Nexus-Credentials') // username:password
     }
     stages{
-        stage('SCM'){
+        // 1️⃣ Checkout source code
+        stage('SCM Checkout'){
             steps{
                 git('https://github.com/Aravindh-29/DbTestApp.git')
             }
         }
-        stage('SonarCodeScan'){
+
+        // 2️⃣ Static Code Analysis
+        stage('SonarCloud Analysis'){
             steps{
                 withSonarQubeEnv('SonarServer'){
                     sh '''
@@ -461,25 +464,29 @@ pipeline{
                 }
             }
         }
-        stage('Build & Publish'){
+
+        // 3️⃣ Build Solution
+        stage('Build Solution'){
+            steps{
+                sh 'dotnet build DbConnectionTester.sln -c Release'
+            }
+        }
+
+        // 4️⃣ Publish Artifacts
+        stage('Publish Artifacts'){
             steps{
                 sh '''
-                    # Build solution
-                    dotnet build DbConnectionTester.sln -c Release
-
-                    # Publish project to ./published
                     dotnet publish DbConnectionTester.sln -c Release -o ./published
-
-                    # Archive artifacts in Jenkins
                     ls -l published
                 '''
                 archiveArtifacts artifacts: 'published/**', fingerprint: true
             }
         }
-        stage('Push to Nexus') {
-            steps {
+
+        // 5️⃣ Push Artifacts to Nexus
+        stage('Push to Nexus'){
+            steps{
                 sh '''
-                    # Upload each file in published folder to Nexus
                     for file in published/*; do
                         curl -u $NEXUS_CRED --upload-file "$file" \
                             http://13.233.196.37:8081/repository/dotnet-artifacts/$(basename $file)
