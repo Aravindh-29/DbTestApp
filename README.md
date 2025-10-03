@@ -427,3 +427,68 @@ Login with:
 
 ✅ Done! Nexus Repository is now installed and running as a service on Ubuntu.
 
+# Nexus integrated with Jenkins Pipeline
+
+```
+pipeline{
+    agent any
+    environment{
+        SONAR_TOKEN = credentials('SONAR_TOKEN')
+        NEXUS_CRED = credentials('Nexus-Credentials') // username:password
+    }
+    stages{
+        stage('SCM'){
+            steps{
+                git('https://github.com/Aravindh-29/DbTestApp.git')
+            }
+        }
+        stage('SonarCodeScan'){
+            steps{
+                withSonarQubeEnv('SonarServer'){
+                    sh '''
+                        export PATH=$PATH:$HOME/.dotnet/tools
+
+                        dotnet sonarscanner begin \
+                          /k:"nowshad13" \
+                          /o:"nowshad13" \
+                          /d:"sonar.host.url=https://sonarcloud.io" \
+                          /d:"sonar.login=$SONAR_TOKEN"
+
+                        dotnet build DbConnectionTester.sln -c Release
+
+                        dotnet sonarscanner end /d:"sonar.login=$SONAR_TOKEN"
+                    '''
+                }
+            }
+        }
+        stage('Build & Publish'){
+            steps{
+                sh '''
+                    # Build solution
+                    dotnet build DbConnectionTester.sln -c Release
+
+                    # Publish project to ./published
+                    dotnet publish DbConnectionTester.sln -c Release -o ./published
+
+                    # Archive artifacts in Jenkins
+                    ls -l published
+                '''
+                archiveArtifacts artifacts: 'published/**', fingerprint: true
+            }
+        }
+        stage('Push to Nexus') {
+            steps {
+                sh '''
+                    # Upload each file in published folder to Nexus
+                    for file in published/*; do
+                        curl -u $NEXUS_CRED --upload-file "$file" \
+                            http://13.233.196.37:8081/repository/dotnet-artifacts/$(basename $file)
+                    done
+                '''
+            }
+        }
+    }
+}
+
+```
+
