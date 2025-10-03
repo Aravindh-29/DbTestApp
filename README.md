@@ -498,4 +498,144 @@ pipeline{
 }
 
 ```
+Sure Aravindh! Let me give you a **complete step-by-step recap** for connecting Jenkins/EC2 to AWS ECR, so you can use it as reference in future. I’ll keep it clear and simple.
+
+---
+
+# **AWS ECR Connection Setup – Full Steps**
+
+---
+
+## **1️⃣ Pre-requisites**
+
+* EC2 instance running Ubuntu
+* Docker installed
+* IAM Role attached to EC2 with **ECR full access** (`AmazonEC2ContainerRegistryFullAccess`)
+* Jenkins installed (if using pipeline)
+* AWS CLI v2 installed
+
+---
+
+## **2️⃣ Install Docker (if not done yet)**
+
+```bash
+sudo apt update
+sudo apt install -y docker.io
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Add Jenkins user to docker group
+sudo usermod -aG docker jenkins
+newgrp docker  # apply new group immediately
+```
+
+Check Docker:
+
+```bash
+docker --version
+```
+
+---
+
+## **3️⃣ Install AWS CLI v2**
+
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+```
+
+---
+
+## **4️⃣ Attach IAM Role to EC2**
+
+* Attach **role with ECR permissions** to EC2 instance.
+* Verify role is attached:
+
+```bash
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/iam/security-credentials/
+```
+
+You should see the **role name**.
+
+---
+
+## **5️⃣ Create ECR repository (UI Steps)**
+
+1. Go to AWS Console → **ECR** → **Repositories**
+2. Click **Create repository**
+
+   * Repository name: e.g., `my-app-repo`
+   * Visibility: Private
+   * Leave other options default
+3. Click **Create repository**
+
+> You will see `Repository URI` like:
+> `669443521868.dkr.ecr.ap-south-1.amazonaws.com/my-app-repo`
+
+---
+
+## **6️⃣ Authenticate Docker to ECR**
+
+```bash
+aws ecr get-login-password --region ap-south-1 | \
+docker login --username AWS --password-stdin 669443521868.dkr.ecr.ap-south-1.amazonaws.com
+```
+
+* If login succeeds, you can push images to ECR.
+
+---
+
+## **7️⃣ Build Docker Image**
+
+```bash
+# In project folder
+docker build -t dbconnectiontester .
+```
+
+---
+
+## **8️⃣ Tag Docker Image for ECR**
+
+```bash
+docker tag dbconnectiontester:latest 669443521868.dkr.ecr.ap-south-1.amazonaws.com/my-app-repo:latest
+
+# Optional: tag with commit hash / version
+docker tag dbconnectiontester:latest 669443521868.dkr.ecr.ap-south-1.amazonaws.com/my-app-repo:<commit-hash>
+```
+
+---
+
+## **9️⃣ Push Docker Image to ECR**
+
+```bash
+docker push 669443521868.dkr.ecr.ap-south-1.amazonaws.com/my-app-repo:latest
+docker push 669443521868.dkr.ecr.ap-south-1.amazonaws.com/my-app-repo:<commit-hash>
+```
+
+---
+
+## **10️⃣ Verify Image in ECR**
+
+* Go to **AWS ECR → Repositories → my-app-repo → Images**
+* You will see `latest` and versioned images listed
+
+---
+
+✅ **Summary**
+
+1. Install Docker & AWS CLI on EC2
+2. Attach IAM role with ECR access
+3. Create ECR repository in AWS console
+4. Authenticate Docker with ECR (`aws ecr get-login-password`)
+5. Build, tag, and push Docker images to ECR
+6. Use versioned tags (commit hash) for rollback in production
+
+---
+
+If you want, I can also **write a ready-made Jenkins pipeline snippet** just for **ECR push** that you can reuse anytime.
+
+Do you want me to do that?
 
