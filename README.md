@@ -163,5 +163,130 @@ pipeline {
 
   * **Ends** the analysis session and uploads results to Sonar.
 
+# Nexus Repository Manager
+
+---
+
+# 🔹 1. Overview of Nexus
+
+Nexus Repository (by **Sonatype**) is a **repository manager**.
+Think of it like a **storage hub** where you keep your build artifacts, Docker images, dependencies, and libraries.
+
+👉 Simple gaa cheppali ante:
+
+* GitHub = code repo
+* Jenkins = build tool
+* Nexus = artifacts repo (built files, jars, dlls, docker images, etc.)
+
+---
+
+## 🔹 2. Why we need Nexus?
+
+1. **Central storage** → Store artifacts (JARs, WARs, DLLs, NuGet packages, Docker images).
+2. **Dependency management** → Developers can download libraries from Nexus instead of internet.
+3. **CI/CD integration** → Jenkins builds → uploads artifacts → Nexus stores them.
+4. **Security** → You control which artifacts are allowed.
+5. **Caching** → Speeds up builds by caching Maven, npm, NuGet, etc.
+
+---
+
+## 🔹 3. Types of repositories in Nexus
+
+* **Hosted** → Store your own artifacts (e.g., JARs, Docker images, NuGet packages).
+* **Proxy** → Cache remote repos (like Maven Central, npmjs, NuGet Gallery).
+* **Group** → Combine multiple repos into one URL (easy for developers).
+
+---
+
+## 🔹 4. Nexus Editions
+
+* **Nexus Repository OSS (Free)** → open source, supports many formats (Maven, npm, NuGet, Docker, etc.).
+* **Nexus Pro (Paid / Free Trial)** → enterprise features like staging, advanced security, support.
+
+👉 For learning/POC → **OSS free version is enough** (runs on your EC2/Docker).
+👉 For trial → You can request Pro trial here:
+🔗 [Sonatype Nexus Repository Free Trial](https://www.sonatype.com/products/sonatype-nexus-repository/free-trial)
+
+---
+
+## 🔹 5. How to run Nexus locally (free OSS)
+
+Run Nexus in Docker (easiest way):
+
+```bash
+docker run -d -p 8081:8081 --name nexus sonatype/nexus3
+```
+
+* Access UI at → `http://<your-server-ip>:8081`
+* Default user: `admin`
+* Password: in container at `/nexus-data/admin.password`
+
+---
+
+## 🔹 6. How Nexus works with Jenkins
+
+The typical CI/CD flow is:
+
+1. **Build app** in Jenkins (`dotnet publish`, `mvn package`, `docker build`, etc.)
+2. **Upload artifact** to Nexus repo using Jenkins.
+
+   * Example: upload `.zip`, `.dll`, `.jar`, or Docker image.
+3. **Later** → Developers or deployment scripts pull artifact from Nexus for deployment.
+
+---
+
+## 🔹 7. Jenkins Pipeline + Nexus Example
+
+### Case 1: Upload a **ZIP/Build Artifact**
+
+```groovy
+stage('Upload to Nexus') {
+    steps {
+        nexusPublisher nexusInstanceId: 'nexus-server',
+                       nexusRepositoryId: 'my-hosted-repo',
+                       packages: [
+                         [
+                           $class: 'MavenPackage',
+                           mavenAssetList: [
+                             [classifier: '', extension: 'zip', filePath: 'published/myapp.zip']
+                           ],
+                           mavenCoordinate: [
+                             artifactId: 'dbtestapp',
+                             groupId: 'com.aravindh',
+                             packaging: 'zip',
+                             version: '1.0.0'
+                           ]
+                         ]
+                       ]
+    }
+}
+```
+
+👉 Here:
+
+* `nexusInstanceId` = the Nexus server config ID in Jenkins (set in **Manage Jenkins → Nexus Configuration**).
+* `nexusRepositoryId` = repo name (e.g., `releases`, `snapshots`, or your own).
+* `filePath` = artifact path (like `published/myapp.zip`).
+
+---
+
+### Case 2: Push a **Docker Image** to Nexus
+
+If Nexus repo is configured as Docker registry:
+
+```groovy
+stage('Build & Push Docker') {
+    steps {
+        sh """
+            docker build -t nexus-server:8082/dbtestapp:1.0.0 .
+            docker login nexus-server:8082 -u admin -p $NEXUS_PASS
+            docker push nexus-server:8082/dbtestapp:1.0.0
+        """
+    }
+}
+```
+
+---
+
 
 
