@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: dbcontester   # lowercase
-          image: bluedock.azurecr.io/repo1:latest   # pipeline will override with BuildId
+          image: nginx:latest   # pipeline will override with BuildId
           ports:
             - containerPort: 8080
               protocol: TCP
