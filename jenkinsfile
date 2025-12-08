@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Git') {
+            steps {
+                git('https://github.com/Aravindh-29/DbTestApp.git')
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'dotnet build DbConnectionTester.sln -c Release'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'dotnet test DbConnectionTester.sln -c Release --no-build'
+            }
+        }
+
+        stage('Publish') {
+            steps {
+                sh 'dotnet publish DbConnectionTester.sln -c Release -o ./Published'
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'Published/**', fingerprint: true
+            }
+        }
+    }
+}
